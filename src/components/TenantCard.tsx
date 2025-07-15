@@ -1,8 +1,10 @@
-import { User, Phone, Mail, Home, Calendar, AlertCircle } from "lucide-react";
+import { User, Phone, Mail, Home, Calendar, AlertCircle, Download, MoreVertical } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface TenantCardProps {
   tenant: {
@@ -19,6 +21,40 @@ interface TenantCardProps {
 }
 
 const TenantCard = ({ tenant }: TenantCardProps) => {
+  const { toast } = useToast();
+
+  const handleDownloadDetails = () => {
+    // Create tenant details as downloadable content
+    const tenantDetails = `
+TENANT DETAILS
+=============
+Name: ${tenant.name}
+Email: ${tenant.email}
+Phone: ${tenant.phone}
+Unit: ${tenant.unit}
+Rent Amount: ₦${tenant.rentAmount.toLocaleString()}
+Rent Due Date: ${tenant.rentDueDate}
+Payment Status: ${tenant.paymentStatus}
+Lease Expiry: ${tenant.leaseExpiry}
+Generated: ${new Date().toLocaleDateString()}
+    `.trim();
+
+    // Create and download file
+    const blob = new Blob([tenantDetails], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${tenant.name.replace(/\s+/g, '_')}_details.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Details Downloaded",
+      description: `${tenant.name}'s details have been downloaded successfully.`,
+    });
+  };
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid":
@@ -101,6 +137,23 @@ const TenantCard = ({ tenant }: TenantCardProps) => {
           <Button size="sm" className="flex-1 bg-gradient-to-r from-primary to-primary-light">
             View Details
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Edit Tenant</DropdownMenuItem>
+              <DropdownMenuItem>Send Reminder</DropdownMenuItem>
+              <DropdownMenuItem>View History</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadDetails}>
+                <Download className="h-4 w-4 mr-2" />
+                Download Details
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">Remove Tenant</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>

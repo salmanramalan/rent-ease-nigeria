@@ -1,4 +1,4 @@
-import { Building2, Users, DollarSign, TrendingUp, Eye, Plus } from "lucide-react";
+import { Building2, Users, DollarSign, TrendingUp, Eye, Plus, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -66,11 +66,19 @@ const Dashboard = () => {
           <p className="text-muted-foreground">Welcome back! Here's what's happening with your properties.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Eye className="h-4 w-4 mr-2" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.href = '/reports'}
+          >
+            <FileText className="h-4 w-4 mr-2" />
             View Reports
           </Button>
-          <Button size="sm" className="bg-gradient-to-r from-primary to-primary-light">
+          <Button 
+            size="sm" 
+            className="bg-gradient-to-r from-primary to-primary-light"
+            onClick={() => window.location.href = '/properties/add'}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Property
           </Button>

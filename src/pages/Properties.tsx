@@ -58,7 +58,10 @@ const Properties = () => {
             <h1 className="text-3xl font-bold text-foreground">Properties</h1>
             <p className="text-muted-foreground">Manage all your properties and units</p>
           </div>
-          <Button className="bg-gradient-to-r from-primary to-primary-light">
+          <Button 
+            className="bg-gradient-to-r from-primary to-primary-light"
+            onClick={() => window.location.href = '/properties/add'}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Property
           </Button>

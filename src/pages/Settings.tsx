@@ -1,0 +1,191 @@
+import { Save, Bell, Mail, Smartphone, User, Building2, CreditCard } from "lucide-react";
+import Layout from "@/components/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+
+const Settings = () => {
+  const { toast } = useToast();
+
+  const handleSaveSettings = () => {
+    toast({
+      title: "Settings Saved",
+      description: "Your preferences have been updated successfully.",
+    });
+  };
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted-foreground">Manage your account and application preferences</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Profile Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Profile Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input id="fullName" defaultValue="John Doe" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input id="email" type="email" defaultValue="john.doe@email.com" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" defaultValue="+234 803 123 4567" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company">Company/Organization</Label>
+                <Input id="company" defaultValue="Doe Properties Ltd" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notification Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notification Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email Notifications
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive rent reminders and updates via email
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4" />
+                    SMS Notifications
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Send rent reminders to tenants via SMS
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Payment Reminders</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatic reminders for overdue payments
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Property Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Property Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currency">Default Currency</Label>
+                <Input id="currency" defaultValue="Nigerian Naira (₦)" readOnly />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rentCycle">Default Rent Cycle</Label>
+                <Input id="rentCycle" defaultValue="Monthly" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gracePeriod">Grace Period (Days)</Label>
+                <Input id="gracePeriod" type="number" defaultValue="7" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lateFee">Late Payment Fee (₦)</Label>
+                <Input id="lateFee" type="number" defaultValue="5000" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Bank Transfer</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Accept payments via bank transfer
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Mobile Money</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Accept payments via mobile money platforms
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <Label htmlFor="bankAccount">Default Bank Account</Label>
+                <Input id="bankAccount" defaultValue="First Bank - 1234567890" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button onClick={handleSaveSettings} className="bg-gradient-to-r from-primary to-primary-light">
+            <Save className="h-4 w-4 mr-2" />
+            Save Settings
+          </Button>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default Settings;

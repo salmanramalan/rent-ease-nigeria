@@ -62,7 +62,10 @@ const Tenants = () => {
             <h1 className="text-3xl font-bold text-foreground">Tenants</h1>
             <p className="text-muted-foreground">Manage tenant information and lease details</p>
           </div>
-          <Button className="bg-gradient-to-r from-primary to-primary-light">
+          <Button 
+            className="bg-gradient-to-r from-primary to-primary-light"
+            onClick={() => window.location.href = '/tenants/add'}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Tenant
           </Button>
