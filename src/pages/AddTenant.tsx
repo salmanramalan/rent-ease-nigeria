@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Mail, Phone, Home } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Home, Building } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,28 +12,99 @@ import { useToast } from "@/hooks/use-toast";
 const AddTenant = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Mock properties data with annual rent per unit
+  const properties = [
+    {
+      id: "1",
+      name: "Ikoyi Heights",
+      address: "Victoria Island, Lagos",
+      type: "Apartment Complex",
+      units: 24,
+      occupiedUnits: 20,
+      annualRentPerUnit: 2400000
+    },
+    {
+      id: "2", 
+      name: "Lekki Gardens",
+      address: "Lekki Phase 1, Lagos",
+      type: "Residential Estate",
+      units: 36,
+      occupiedUnits: 32,
+      annualRentPerUnit: 1800000
+    },
+    {
+      id: "3",
+      name: "Abuja Business Center",
+      address: "Central Business District, Abuja",
+      type: "Commercial Complex",
+      units: 18,
+      occupiedUnits: 15,
+      annualRentPerUnit: 4800000
+    },
+    {
+      id: "4",
+      name: "Surulere Plaza",
+      address: "Surulere, Lagos",
+      type: "Mixed Use",
+      units: 12,
+      occupiedUnits: 8,
+      annualRentPerUnit: 2000000
+    }
+  ];
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    property: "",
     unit: "",
-    rentAmount: "",
+    annualRent: "",
     rentDueDate: "",
+    rentStartDate: "",
     leaseExpiry: ""
   });
+
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [availableUnits, setAvailableUnits] = useState<string[]>([]);
+
+  // Generate available units when property is selected
+  useEffect(() => {
+    if (selectedProperty) {
+      const availableUnitsCount = selectedProperty.units - selectedProperty.occupiedUnits;
+      const units = [];
+      for (let i = 1; i <= availableUnitsCount; i++) {
+        units.push(`Unit ${i + selectedProperty.occupiedUnits}`);
+      }
+      setAvailableUnits(units);
+      
+      // Auto-fill annual rent
+      setFormData(prev => ({ 
+        ...prev, 
+        annualRent: selectedProperty.annualRentPerUnit.toString(),
+        unit: "" // Reset unit selection
+      }));
+    }
+  }, [selectedProperty]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Simulate tenant creation
     toast({
       title: "Tenant Added Successfully",
-      description: `${formData.name} has been added to unit ${formData.unit}.`,
+      description: `${formData.name} has been added to ${formData.unit} at ${selectedProperty?.name}.`,
     });
     navigate("/tenants");
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handlePropertyChange = (value: string) => {
+    const property = properties.find(p => p.id === value);
+    setSelectedProperty(property);
+    handleChange("property", value);
   };
 
   return (
@@ -61,6 +132,26 @@ const AddTenant = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Property Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="property" className="flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Select Property
+                </Label>
+                <Select onValueChange={handlePropertyChange} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {properties.map((property) => (
+                      <SelectItem key={property.id} value={property.id}>
+                        {property.name} - {property.address} ({property.units - property.occupiedUnits} units available)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
@@ -77,13 +168,22 @@ const AddTenant = () => {
                     <Home className="h-4 w-4" />
                     Unit
                   </Label>
-                  <Input
-                    id="unit"
-                    placeholder="e.g. B4"
-                    value={formData.unit}
-                    onChange={(e) => handleChange("unit", e.target.value)}
+                  <Select 
+                    onValueChange={(value) => handleChange("unit", value)} 
+                    disabled={!selectedProperty}
                     required
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={selectedProperty ? "Select available unit" : "Select property first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableUnits.map((unit) => (
+                        <SelectItem key={unit} value={unit}>
+                          {unit}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -119,16 +219,35 @@ const AddTenant = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="rentAmount">Monthly Rent (₦)</Label>
+                  <Label htmlFor="annualRent">Annual Rent (₦)</Label>
                   <Input
-                    id="rentAmount"
+                    id="annualRent"
                     type="number"
-                    placeholder="180000"
-                    value={formData.rentAmount}
-                    onChange={(e) => handleChange("rentAmount", e.target.value)}
+                    placeholder="2400000"
+                    value={formData.annualRent}
+                    onChange={(e) => handleChange("annualRent", e.target.value)}
+                    disabled={!!selectedProperty}
+                    required
+                  />
+                  {selectedProperty && (
+                    <p className="text-sm text-muted-foreground">
+                      Auto-filled based on selected property
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rentStartDate">Rent Start Date</Label>
+                  <Input
+                    id="rentStartDate"
+                    type="date"
+                    value={formData.rentStartDate}
+                    onChange={(e) => handleChange("rentStartDate", e.target.value)}
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="rentDueDate">Rent Due Date</Label>
                   <Select onValueChange={(value) => handleChange("rentDueDate", value)} required>
@@ -146,18 +265,18 @@ const AddTenant = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="leaseExpiry">Lease Expiry Date</Label>
+                  <Input
+                    id="leaseExpiry"
+                    type="date"
+                    value={formData.leaseExpiry}
+                    onChange={(e) => handleChange("leaseExpiry", e.target.value)}
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="leaseExpiry">Lease Expiry Date</Label>
-                <Input
-                  id="leaseExpiry"
-                  type="date"
-                  value={formData.leaseExpiry}
-                  onChange={(e) => handleChange("leaseExpiry", e.target.value)}
-                  required
-                />
-              </div>
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="bg-gradient-to-r from-primary to-primary-light">
