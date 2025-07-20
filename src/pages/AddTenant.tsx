@@ -60,7 +60,6 @@ const AddTenant = () => {
     property: "",
     unit: "",
     annualRent: "",
-    rentDueDate: "",
     rentStartDate: "",
     leaseExpiry: ""
   });
@@ -248,23 +247,6 @@ const AddTenant = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rentDueDate">Rent Due Date</Label>
-                  <Select onValueChange={(value) => handleChange("rentDueDate", value)} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select due date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1st of every month">1st of every month</SelectItem>
-                      <SelectItem value="5th of every month">5th of every month</SelectItem>
-                      <SelectItem value="10th of every month">10th of every month</SelectItem>
-                      <SelectItem value="15th of every month">15th of every month</SelectItem>
-                      <SelectItem value="20th of every month">20th of every month</SelectItem>
-                      <SelectItem value="25th of every month">25th of every month</SelectItem>
-                      <SelectItem value="Last day of month">Last day of month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="leaseExpiry">Lease Expiry Date</Label>
                   <Input
