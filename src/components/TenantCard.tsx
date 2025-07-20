@@ -1,4 +1,4 @@
-import { User, Phone, Mail, Home, Calendar, AlertCircle, Download, MoreVertical } from "lucide-react";
+import { User, Phone, Mail, Home, Calendar, AlertCircle, Download, MoreVertical, Building } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,11 @@ interface TenantCardProps {
     name: string;
     email: string;
     phone: string;
+    property: string;
+    propertyAddress: string;
     unit: string;
-    rentAmount: number;
-    rentDueDate: string;
+    annualRent: number;
+    rentStartDate: string;
     paymentStatus: "paid" | "due" | "overdue";
     leaseExpiry: string;
   };
@@ -31,9 +33,11 @@ TENANT DETAILS
 Name: ${tenant.name}
 Email: ${tenant.email}
 Phone: ${tenant.phone}
+Property: ${tenant.property}
+Property Address: ${tenant.propertyAddress}
 Unit: ${tenant.unit}
-Rent Amount: ₦${tenant.rentAmount.toLocaleString()}
-Rent Due Date: ${tenant.rentDueDate}
+Annual Rent: ₦${tenant.annualRent.toLocaleString()}
+Rent Start Date: ${tenant.rentStartDate}
 Payment Status: ${tenant.paymentStatus}
 Lease Expiry: ${tenant.leaseExpiry}
 Generated: ${new Date().toLocaleDateString()}
@@ -88,7 +92,11 @@ Generated: ${new Date().toLocaleDateString()}
               </h3>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Home className="h-3 w-3" />
-                Unit {tenant.unit}
+                {tenant.unit}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Building className="h-3 w-3" />
+                {tenant.property}
               </div>
             </div>
           </div>
@@ -112,12 +120,12 @@ Generated: ${new Date().toLocaleDateString()}
 
         <div className="grid grid-cols-2 gap-4 p-3 bg-muted rounded-lg">
           <div>
-            <div className="text-xs text-muted-foreground">Monthly Rent</div>
-            <div className="font-semibold text-foreground">₦{tenant.rentAmount.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground">Annual Rent</div>
+            <div className="font-semibold text-foreground">₦{tenant.annualRent.toLocaleString()}</div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Due Date</div>
-            <div className="font-semibold text-foreground">{tenant.rentDueDate}</div>
+            <div className="text-xs text-muted-foreground">Start Date</div>
+            <div className="font-semibold text-foreground">{new Date(tenant.rentStartDate).toLocaleDateString()}</div>
           </div>
         </div>
 
