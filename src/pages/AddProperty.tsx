@@ -18,6 +18,7 @@ const AddProperty = () => {
     address: "",
     type: "",
     units: "",
+    annualRentPerUnit: "",
     description: ""
   });
 
@@ -102,19 +103,32 @@ const AddProperty = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="units" className="flex items-center gap-2">
-                  <Home className="h-4 w-4" />
-                  Number of Units
-                </Label>
-                <Input
-                  id="units"
-                  type="number"
-                  placeholder="e.g. 24"
-                  value={formData.units}
-                  onChange={(e) => handleChange("units", e.target.value)}
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="units" className="flex items-center gap-2">
+                    <Home className="h-4 w-4" />
+                    Number of Units
+                  </Label>
+                  <Input
+                    id="units"
+                    type="number"
+                    placeholder="e.g. 24"
+                    value={formData.units}
+                    onChange={(e) => handleChange("units", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="annualRentPerUnit">Annual Rent per Unit (₦)</Label>
+                  <Input
+                    id="annualRentPerUnit"
+                    type="number"
+                    placeholder="e.g. 1,200,000"
+                    value={formData.annualRentPerUnit}
+                    onChange={(e) => handleChange("annualRentPerUnit", e.target.value)}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
