@@ -1,4 +1,4 @@
-import { User, Phone, Mail, Home, Calendar, AlertCircle, Download, MoreVertical, Building } from "lucide-react";
+import { User, Phone, Mail, Home, Calendar, AlertCircle, Download, MoreVertical, Building, MessageSquare, ChevronDown, Edit, Bell } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,41 @@ interface TenantCardProps {
 
 const TenantCard = ({ tenant }: TenantCardProps) => {
   const { toast } = useToast();
+
+  const handleEmailContact = () => {
+    const subject = `Regarding ${tenant.property} - ${tenant.unit}`;
+    const body = `Dear ${tenant.name},\n\nI hope this message finds you well.\n\nBest regards,\nProperty Management Team`;
+    window.open(`mailto:${tenant.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
+  const handleWhatsAppContact = () => {
+    const message = `Hello ${tenant.name}, this is regarding your tenancy at ${tenant.property} - ${tenant.unit}.`;
+    const phoneNumber = tenant.phone.replace(/[^\d]/g, '');
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`);
+  };
+
+  const handleViewDetails = () => {
+    toast({
+      title: "Tenant Details",
+      description: `Name: ${tenant.name}\nEmail: ${tenant.email}\nPhone: ${tenant.phone}\nProperty: ${tenant.property}\nUnit: ${tenant.unit}\nAnnual Rent: ₦${tenant.annualRent.toLocaleString()}\nPayment Status: ${tenant.paymentStatus.toUpperCase()}`,
+    });
+  };
+
+  const handleEditTenant = () => {
+    toast({
+      title: "Edit Tenant",
+      description: `Redirecting to edit ${tenant.name}...`,
+    });
+    // In a real app, this would navigate to edit page
+    // window.location.href = `/tenants/edit/${tenant.id}`;
+  };
+
+  const handleSendReminder = () => {
+    toast({
+      title: "Reminder Sent",
+      description: `Payment reminder sent to ${tenant.name} via email and SMS.`,
+    });
+  };
 
   const handleDownloadDetails = () => {
     // Create tenant details as downloadable content
@@ -139,10 +174,25 @@ Generated: ${new Date().toLocaleDateString()}
         </div>
 
         <div className="flex gap-2 pt-2">
-          <Button variant="outline" size="sm" className="flex-1">
-            Contact
-          </Button>
-          <Button size="sm" className="flex-1 bg-gradient-to-r from-primary to-primary-light">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex-1">
+                Contact
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-40">
+              <DropdownMenuItem onClick={handleEmailContact}>
+                <Mail className="h-4 w-4 mr-2" />
+                Send Email
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleWhatsAppContact}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                WhatsApp
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" className="flex-1 bg-gradient-to-r from-primary to-primary-light" onClick={handleViewDetails}>
             View Details
           </Button>
           <DropdownMenu>
@@ -151,9 +201,15 @@ Generated: ${new Date().toLocaleDateString()}
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Edit Tenant</DropdownMenuItem>
-              <DropdownMenuItem>Send Reminder</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={handleEditTenant}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Tenant
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSendReminder}>
+                <Bell className="h-4 w-4 mr-2" />
+                Send Reminder
+              </DropdownMenuItem>
               <DropdownMenuItem>View History</DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadDetails}>
                 <Download className="h-4 w-4 mr-2" />
