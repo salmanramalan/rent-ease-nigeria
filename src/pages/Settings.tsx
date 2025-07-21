@@ -1,4 +1,4 @@
-import { Save, Bell, Mail, Smartphone, User, Building2, CreditCard } from "lucide-react";
+import { Save, Bell, Mail, Smartphone, User, Building2, CreditCard, Clock, Calendar } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,6 +171,74 @@ const Settings = () => {
               <div className="space-y-2">
                 <Label htmlFor="bankAccount">Default Bank Account</Label>
                 <Input id="bankAccount" defaultValue="First Bank - 1234567890" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Reminder Schedule Settings */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Reminder Schedule
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-2 font-medium">
+                      <Calendar className="h-4 w-4" />
+                      6 Months Before Expiry
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send lease renewal reminders 6 months early
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-2 font-medium">
+                      <Calendar className="h-4 w-4" />
+                      9 Months Before Expiry
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Advanced notice for lease planning
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-2 font-medium">
+                      <Calendar className="h-4 w-4" />
+                      11 Months Before Expiry
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Early lease renewal discussions
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Reminder Preferences</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reminderTime">Default Reminder Time</Label>
+                    <Input id="reminderTime" type="time" defaultValue="09:00" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reminderTemplate">Email Template</Label>
+                    <Input id="reminderTemplate" defaultValue="Lease Expiry Notice" />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
