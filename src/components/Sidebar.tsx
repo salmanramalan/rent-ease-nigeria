@@ -127,7 +127,7 @@ const Sidebar = () => {
               onClick={() => setIsMobileOpen(false)}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!isCollapsed && <span className="font-medium">{item.title}</span>}
+              {(!isCollapsed || isMobileOpen) && <span className="font-medium">{item.title}</span>}
             </NavLink>
           ))}
         </nav>
