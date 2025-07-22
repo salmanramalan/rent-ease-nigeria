@@ -195,7 +195,7 @@ Generated: ${new Date().toLocaleDateString()}
                 View Details
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[480px] max-h-[80vh] overflow-y-auto">"
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
