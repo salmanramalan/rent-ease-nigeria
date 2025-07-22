@@ -122,7 +122,7 @@ const Settings = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="rentCycle">Default Rent Cycle</Label>
-                <Input id="rentCycle" defaultValue="Monthly" />
+                <Input id="rentCycle" defaultValue="Annually" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gracePeriod">Grace Period (Days)</Label>

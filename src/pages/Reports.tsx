@@ -19,7 +19,7 @@ const Reports = () => {
   const reports = [
     {
       title: "Rent Collection Report",
-      description: "Monthly rent collection summary and payment status",
+      description: "Annual rent collection summary and payment status",
       icon: TrendingUp,
       period: "Last 30 Days",
       amount: "₦12,800,000"

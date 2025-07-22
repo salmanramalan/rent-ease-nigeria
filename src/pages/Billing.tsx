@@ -97,7 +97,7 @@ const Billing = () => {
       dueDate: "2024-01-15",
       issueDate: "2024-01-01",
       status: "paid" as const,
-      description: "Monthly rent for January 2024"
+      description: "Annual rent for 2024"
     },
     {
       id: "2",
@@ -108,7 +108,7 @@ const Billing = () => {
       dueDate: "2024-01-10",
       issueDate: "2024-01-01",
       status: "sent" as const,
-      description: "Monthly rent for January 2024"
+      description: "Annual rent for 2024"
     },
     {
       id: "3",
