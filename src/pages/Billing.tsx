@@ -11,7 +11,11 @@ import { useState } from "react";
 
 const Billing = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState("");
+  const [selectedTenant, setSelectedTenant] = useState("");
   const [formData, setFormData] = useState({
+    propertyId: "",
+    tenantId: "",
     tenantName: "",
     unit: "",
     billType: "",
@@ -20,11 +24,59 @@ const Billing = () => {
     description: ""
   });
 
+  // Mock properties and tenants data
+  const properties = [
+    { id: "1", name: "Sunset Villa", address: "123 Victoria Island" },
+    { id: "2", name: "Ocean View Apartments", address: "456 Lekki Phase 1" },
+    { id: "3", name: "Garden Estate", address: "789 Ikoyi" }
+  ];
+
+  const tenants = [
+    { id: "1", name: "Adebayo Johnson", unit: "B4", propertyId: "1" },
+    { id: "2", name: "Chioma Okeke", unit: "A12", propertyId: "2" },
+    { id: "3", name: "Ibrahim Musa", unit: "C7", propertyId: "1" },
+    { id: "4", name: "Funmi Adeleke", unit: "D3", propertyId: "3" }
+  ];
+
+  // Filter tenants based on selected property
+  const filteredTenants = selectedProperty 
+    ? tenants.filter(tenant => tenant.propertyId === selectedProperty)
+    : [];
+
+  const handlePropertyChange = (propertyId: string) => {
+    setSelectedProperty(propertyId);
+    setSelectedTenant("");
+    setFormData({
+      ...formData,
+      propertyId,
+      tenantId: "",
+      tenantName: "",
+      unit: ""
+    });
+  };
+
+  const handleTenantChange = (tenantId: string) => {
+    setSelectedTenant(tenantId);
+    const tenant = tenants.find(t => t.id === tenantId);
+    if (tenant) {
+      setFormData({
+        ...formData,
+        tenantId,
+        tenantName: tenant.name,
+        unit: tenant.unit
+      });
+    }
+  };
+
   const handleCreateBill = () => {
     // Here you would typically send the data to your backend
     console.log("Creating bill:", formData);
     setIsCreateDialogOpen(false);
+    setSelectedProperty("");
+    setSelectedTenant("");
     setFormData({
+      propertyId: "",
+      tenantId: "",
       tenantName: "",
       unit: "",
       billType: "",
@@ -106,18 +158,47 @@ const Billing = () => {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="property" className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Property
+                  </Label>
+                  <Select value={selectedProperty} onValueChange={handlePropertyChange}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Select property" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {properties.map((property) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name} - {property.address}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tenantName" className="flex items-center gap-2">
+                    <Label htmlFor="tenant" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      Tenant Name
+                      Tenant
                     </Label>
-                    <Input
-                      id="tenantName"
-                      value={formData.tenantName}
-                      onChange={(e) => setFormData({...formData, tenantName: e.target.value})}
-                      placeholder="Enter tenant name"
-                    />
+                    <Select 
+                      value={selectedTenant} 
+                      onValueChange={handleTenantChange}
+                      disabled={!selectedProperty}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder={selectedProperty ? "Select tenant" : "Select property first"} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-border z-50">
+                        {filteredTenants.map((tenant) => (
+                          <SelectItem key={tenant.id} value={tenant.id}>
+                            {tenant.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="unit" className="flex items-center gap-2">
@@ -127,8 +208,9 @@ const Billing = () => {
                     <Input
                       id="unit"
                       value={formData.unit}
-                      onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                      placeholder="e.g., A12, B4"
+                      readOnly
+                      placeholder="Auto-filled from tenant"
+                      className="bg-muted"
                     />
                   </div>
                 </div>
@@ -137,10 +219,10 @@ const Billing = () => {
                   <div className="space-y-2">
                     <Label htmlFor="billType">Bill Type</Label>
                     <Select value={formData.billType} onValueChange={(value) => setFormData({...formData, billType: value})}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select bill type" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background border border-border z-50">
                         <SelectItem value="rent">Rent</SelectItem>
                         <SelectItem value="utility">Utility</SelectItem>
                         <SelectItem value="maintenance">Maintenance</SelectItem>
