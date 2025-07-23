@@ -6,6 +6,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
@@ -23,11 +26,38 @@ interface TenantCardProps {
     paymentStatus: "paid" | "due" | "overdue";
     leaseExpiry: string;
   };
+  onTenantUpdate?: (tenant: TenantCardProps['tenant']) => void;
 }
 
-const TenantCard = ({ tenant }: TenantCardProps) => {
+const TenantCard = ({ tenant, onTenantUpdate }: TenantCardProps) => {
   const { toast } = useToast();
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: tenant.name,
+    email: tenant.email,
+    phone: tenant.phone,
+    property: tenant.property,
+    propertyAddress: tenant.propertyAddress,
+    unit: tenant.unit,
+    annualRent: tenant.annualRent,
+    rentStartDate: tenant.rentStartDate,
+    paymentStatus: tenant.paymentStatus,
+    leaseExpiry: tenant.leaseExpiry
+  });
+
+  // Mock data for properties and units
+  const availableProperties = [
+    { id: "1", name: "Ikoyi Heights", address: "Victoria Island, Lagos" },
+    { id: "2", name: "Lekki Gardens", address: "Lekki Phase 1, Lagos" },
+    { id: "3", name: "Abuja Business Center", address: "Central Business District, Abuja" },
+    { id: "4", name: "Surulere Plaza", address: "Surulere, Lagos" },
+  ];
+
+  const availableUnits = [
+    "Unit A1", "Unit A2", "Unit A3", "Unit B1", "Unit B2", "Unit B3", 
+    "Unit C1", "Unit C2", "Unit D1", "Unit D2"
+  ];
 
   const handleEmailContact = () => {
     const subject = `Regarding ${tenant.property} - ${tenant.unit}`;
@@ -42,12 +72,31 @@ const TenantCard = ({ tenant }: TenantCardProps) => {
   };
 
   const handleEditTenant = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = () => {
+    const updatedTenant = {
+      ...tenant,
+      ...editForm
+    };
+    
+    onTenantUpdate?.(updatedTenant);
+    setIsEditDialogOpen(false);
+    
     toast({
-      title: "Edit Tenant",
-      description: `Redirecting to edit ${tenant.name}...`,
+      title: "Tenant Updated",
+      description: `${editForm.name} has been updated successfully.`,
     });
-    // In a real app, this would navigate to edit page
-    // window.location.href = `/tenants/edit/${tenant.id}`;
+  };
+
+  const handlePropertyChange = (propertyName: string) => {
+    const selectedProperty = availableProperties.find(p => p.name === propertyName);
+    setEditForm({
+      ...editForm,
+      property: propertyName,
+      propertyAddress: selectedProperty?.address || ""
+    });
   };
 
   const handleSendReminder = () => {
@@ -350,10 +399,145 @@ Generated: ${new Date().toLocaleDateString()}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem onClick={handleEditTenant}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Tenant
-              </DropdownMenuItem>
+              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleEditTenant}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Tenant
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Edit Tenant</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-name">Full Name</Label>
+                        <Input
+                          id="edit-name"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-email">Email</Label>
+                        <Input
+                          id="edit-email"
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-phone">Phone Number</Label>
+                      <Input
+                        id="edit-phone"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      />
+                    </div>
+                    
+                    <Separator />
+                    <h4 className="font-medium text-foreground">Property Assignment</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-property">Property</Label>
+                        <Select value={editForm.property} onValueChange={handlePropertyChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableProperties.map((prop) => (
+                              <SelectItem key={prop.id} value={prop.name}>{prop.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-unit">Unit</Label>
+                        <Select value={editForm.unit} onValueChange={(value) => setEditForm({ ...editForm, unit: value })}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableUnits.map((unit) => (
+                              <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-address">Property Address</Label>
+                      <Input
+                        id="edit-address"
+                        value={editForm.propertyAddress}
+                        onChange={(e) => setEditForm({ ...editForm, propertyAddress: e.target.value })}
+                      />
+                    </div>
+                    
+                    <Separator />
+                    <h4 className="font-medium text-foreground">Lease Details</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-rent">Annual Rent (₦)</Label>
+                        <Input
+                          id="edit-rent"
+                          type="number"
+                          value={editForm.annualRent}
+                          onChange={(e) => setEditForm({ ...editForm, annualRent: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-status">Payment Status</Label>
+                        <Select value={editForm.paymentStatus} onValueChange={(value: any) => setEditForm({ ...editForm, paymentStatus: value })}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="due">Due</SelectItem>
+                            <SelectItem value="overdue">Overdue</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-start">Rent Start Date</Label>
+                        <Input
+                          id="edit-start"
+                          type="date"
+                          value={editForm.rentStartDate}
+                          onChange={(e) => setEditForm({ ...editForm, rentStartDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-expiry">Lease Expiry</Label>
+                        <Input
+                          id="edit-expiry"
+                          type="date"
+                          value={editForm.leaseExpiry}
+                          onChange={(e) => setEditForm({ ...editForm, leaseExpiry: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                      <Button onClick={handleEditSubmit} className="bg-gradient-to-r from-primary to-primary-light">
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <DropdownMenuItem onClick={handleSendReminder}>
                 <Bell className="h-4 w-4 mr-2" />
                 Send Reminder

@@ -3,10 +3,10 @@ import Layout from "@/components/Layout";
 import PropertyCard from "@/components/PropertyCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 const Properties = () => {
-  // Mock data for demonstration
-  const properties = [
+  const [properties, setProperties] = useState([
     {
       id: "1",
       name: "Ikoyi Heights",
@@ -47,7 +47,15 @@ const Properties = () => {
       monthlyRevenue: 2400000,
       status: "active" as const
     }
-  ];
+  ]);
+
+  const handlePropertyUpdate = (updatedProperty: any) => {
+    setProperties(prev => 
+      prev.map(prop => 
+        prop.id === updatedProperty.id ? updatedProperty : prop
+      )
+    );
+  };
 
   return (
     <Layout>
@@ -85,7 +93,11 @@ const Properties = () => {
         {/* Properties Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {properties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
+            <PropertyCard 
+              key={property.id} 
+              property={property} 
+              onPropertyUpdate={handlePropertyUpdate}
+            />
           ))}
         </div>
       </div>

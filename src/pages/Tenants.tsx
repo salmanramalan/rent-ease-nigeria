@@ -12,8 +12,8 @@ const Tenants = () => {
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  // Mock data for demonstration
-  const tenants = [
+  
+  const [tenants, setTenants] = useState([
     {
       id: "1",
       name: "Adebayo Johnson",
@@ -66,7 +66,15 @@ const Tenants = () => {
       paymentStatus: "paid" as const,
       leaseExpiry: "2025-06-30"
     }
-  ];
+  ]);
+
+  const handleTenantUpdate = (updatedTenant: any) => {
+    setTenants(prev => 
+      prev.map(tenant => 
+        tenant.id === updatedTenant.id ? updatedTenant : tenant
+      )
+    );
+  };
 
   // Get unique properties and locations for filter options
   const uniqueProperties = [...new Set(tenants.map(tenant => tenant.property))];
@@ -228,7 +236,11 @@ const Tenants = () => {
         {/* Tenants Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredTenants.map((tenant) => (
-            <TenantCard key={tenant.id} tenant={tenant} />
+            <TenantCard 
+              key={tenant.id} 
+              tenant={tenant} 
+              onTenantUpdate={handleTenantUpdate}
+            />
           ))}
         </div>
 
