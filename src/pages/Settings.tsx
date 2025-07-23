@@ -1,4 +1,4 @@
-import { Save, Bell, Mail, Smartphone, User, Building2, CreditCard, Clock, Calendar } from "lucide-react";
+import { Save, Bell, Mail, Smartphone, User, Building2, Clock, Calendar } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,45 +135,6 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          {/* Payment Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Payment Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Bank Transfer</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Accept payments via bank transfer
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Mobile Money</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Accept payments via mobile money platforms
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <Label htmlFor="bankAccount">Default Bank Account</Label>
-                <Input id="bankAccount" defaultValue="First Bank - 1234567890" />
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Reminder Schedule Settings */}
           <Card className="lg:col-span-2">
