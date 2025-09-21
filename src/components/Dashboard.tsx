@@ -1,14 +1,20 @@
-import { Building2, Users, DollarSign, TrendingUp, Eye, Plus, FileText } from "lucide-react";
+import { Building2, Users, DollarSign, TrendingUp, Plus, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import SubscriptionStatus from "@/components/SubscriptionStatus";
 
 const Dashboard = () => {
-  // Mock data for demonstration
+  const { user } = useAuth();
+  const { propertyCount, canAddProperty, isFreePlan } = useSubscription();
+  
+  // Stats will be real data from the user's properties
   const stats = [
     {
       title: "Total Properties",
-      value: "8",
-      change: "+2 this month",
+      value: propertyCount.toString(),
+      change: isFreePlan ? `${2 - propertyCount} remaining on free plan` : "Unlimited on premium",
       icon: Building2,
       gradient: "bg-gradient-to-br from-primary to-primary-light"
     },
@@ -63,7 +69,9 @@ const Dashboard = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Property Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening with your properties.</p>
+          <p className="text-muted-foreground">
+            Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}! Here's what's happening with your properties.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -78,6 +86,7 @@ const Dashboard = () => {
             size="sm" 
             className="bg-gradient-to-r from-primary to-primary-light"
             onClick={() => window.location.href = '/properties/add'}
+            disabled={!canAddProperty()}
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Property
@@ -85,24 +94,32 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.gradient}`}>
-                <stat.icon className="h-4 w-4 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.change}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Stats and Subscription Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Stats Grid */}
+        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {stats.map((stat, index) => (
+            <Card key={index} className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </CardTitle>
+                <div className={`p-2 rounded-lg ${stat.gradient}`}>
+                  <stat.icon className="h-4 w-4 text-white" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">{stat.change}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        {/* Subscription Status */}
+        <div className="lg:col-span-1">
+          <SubscriptionStatus />
+        </div>
       </div>
 
       {/* Recent Activities */}

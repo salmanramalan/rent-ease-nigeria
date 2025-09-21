@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import UserMenu from "@/components/UserMenu";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -99,17 +100,20 @@ const Sidebar = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-light rounded-lg flex items-center justify-center">
                 <Building2 className="h-5 w-5 text-white" />
               </div>
-              <div className="font-bold text-foreground">PropertyBills</div>
+              <div className="font-bold text-foreground">RentEase Nigeria</div>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden lg:flex"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isCollapsed && <UserMenu />}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden lg:flex"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Navigation */}
