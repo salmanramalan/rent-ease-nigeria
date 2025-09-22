@@ -45,7 +45,20 @@ const Auth = () => {
       }
 
       if (result.error) {
-        setError(result.error.message);
+        // Clear password field on login error for security
+        if (isLogin) {
+          setPassword('');
+        }
+        
+        // Show user-friendly error messages
+        const errorMessage = result.error.message;
+        if (errorMessage.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else if (errorMessage.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before signing in.');
+        } else {
+          setError(errorMessage);
+        }
       } else if (!isLogin) {
         setError(null);
         setIsLogin(true);
