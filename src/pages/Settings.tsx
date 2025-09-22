@@ -7,15 +7,74 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const Settings = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [fullName, setFullName] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleSaveSettings = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your preferences have been updated successfully.",
-    });
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setProfile(data);
+      setFullName(data?.full_name || '');
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName })
+        .eq('user_id', user.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save settings. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Settings Saved",
+        description: "Your preferences have been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -39,19 +98,30 @@ const Settings = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" defaultValue="John Doe" />
+                <Input 
+                  id="fullName" 
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder={loading ? "Loading..." : "Enter your full name"}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue="john.doe@email.com" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={user?.email || ''} 
+                  readOnly 
+                  className="bg-muted"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" defaultValue="+234 803 123 4567" />
+                <Input id="phone" placeholder="Enter your phone number" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="company">Company/Organization</Label>
-                <Input id="company" defaultValue="Doe Properties Ltd" />
+                <Input id="company" placeholder="Enter your company name" />
               </div>
             </CardContent>
           </Card>
