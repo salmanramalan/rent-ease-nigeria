@@ -74,7 +74,7 @@ const Landing = () => {
             <Button variant="ghost" onClick={() => navigate('/auth')}>
               Login
             </Button>
-            <Button onClick={() => navigate('/auth')}>
+            <Button onClick={() => navigate('/auth?mode=signup')}>
               Get Started
             </Button>
           </div>
@@ -97,7 +97,7 @@ const Landing = () => {
                 The complete solution for landlords and property managers. Manage properties, track payments, and keep tenants happy - all in one powerful platform.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="text-lg px-8" onClick={() => navigate('/auth')}>
+                <Button size="lg" className="text-lg px-8" onClick={() => navigate('/auth?mode=signup')}>
                   Start Free Trial
                 </Button>
                 <Button variant="outline" size="lg" className="text-lg px-8">
@@ -165,7 +165,7 @@ const Landing = () => {
                   </div>
                 ))}
               </div>
-              <Button size="lg" onClick={() => navigate('/auth')}>
+              <Button size="lg" onClick={() => navigate('/auth?mode=signup')}>
                 Start Managing Better Today
               </Button>
             </div>
@@ -203,10 +203,10 @@ const Landing = () => {
             Join thousands of successful landlords and property managers who trust PropertyPro
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-lg px-8" onClick={() => navigate('/auth')}>
+            <Button size="lg" variant="secondary" className="text-lg px-8" onClick={() => navigate('/auth?mode=signup')}>
               Start Free Trial
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
+            <Button size="lg" className="text-lg px-8 bg-white text-black border-white hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-colors">
               Contact Sales
             </Button>
           </div>
