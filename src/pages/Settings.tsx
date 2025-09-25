@@ -46,6 +46,32 @@ const Settings = () => {
     }
   };
 
+  // Set up real-time updates for profile changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          setProfile(payload.new);
+          setFullName(payload.new.full_name || '');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const handleSaveSettings = async () => {
     if (!user) return;
 

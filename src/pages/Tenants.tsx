@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Filter, X } from "lucide-react";
 import Layout from "@/components/Layout";
 import TenantCard from "@/components/TenantCard";
@@ -6,67 +6,70 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Tenants = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
-  const [tenants, setTenants] = useState([
-    {
-      id: "1",
-      name: "Adebayo Johnson",
-      email: "adebayo.johnson@email.com",
-      phone: "+234 803 123 4567",
-      property: "Ikoyi Heights",
-      propertyAddress: "Victoria Island, Lagos",
-      unit: "Unit 21",
-      annualRent: 2400000,
-      rentStartDate: "2024-01-15",
-      paymentStatus: "paid" as const,
-      leaseExpiry: "2024-12-31"
-    },
-    {
-      id: "2",
-      name: "Chioma Okeke", 
-      email: "chioma.okeke@email.com",
-      phone: "+234 802 987 6543",
-      property: "Lekki Gardens",
-      propertyAddress: "Lekki Phase 1, Lagos",
-      unit: "Unit 33",
-      annualRent: 1800000,
-      rentStartDate: "2024-02-10",
-      paymentStatus: "due" as const,
-      leaseExpiry: "2025-03-15"
-    },
-    {
-      id: "3",
-      name: "Ibrahim Musa",
-      email: "ibrahim.musa@email.com", 
-      phone: "+234 701 555 0123",
-      property: "Abuja Business Center",
-      propertyAddress: "Central Business District, Abuja",
-      unit: "Unit 16",
-      annualRent: 4800000,
-      rentStartDate: "2023-08-01",
-      paymentStatus: "overdue" as const,
-      leaseExpiry: "2024-08-20"
-    },
-    {
-      id: "4",
-      name: "Funmi Adeleke",
-      email: "funmi.adeleke@email.com",
-      phone: "+234 805 444 7890", 
-      property: "Surulere Plaza",
-      propertyAddress: "Surulere, Lagos",
-      unit: "Unit 9",
-      annualRent: 2000000,
-      rentStartDate: "2024-03-20",
-      paymentStatus: "paid" as const,
-      leaseExpiry: "2025-06-30"
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchTenants();
+      fetchProperties();
     }
-  ]);
+  }, [user]);
+
+  const fetchTenants = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tenants')
+        .select(`
+          *,
+          properties (
+            name,
+            address
+          )
+        `)
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching tenants:', error);
+        return;
+      }
+
+      setTenants(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error fetching properties:', error);
+        return;
+      }
+
+      setProperties(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   const handleTenantUpdate = (updatedTenant: any) => {
     setTenants(prev => 
@@ -77,23 +80,24 @@ const Tenants = () => {
   };
 
   // Get unique properties and locations for filter options
-  const uniqueProperties = [...new Set(tenants.map(tenant => tenant.property))];
+  const uniqueProperties = [...new Set(tenants.map(tenant => tenant.properties?.name).filter(Boolean))];
   const uniqueLocations = [...new Set(tenants.map(tenant => {
+    if (!tenant.properties?.address) return null;
     // Extract city/area from address (e.g., "Victoria Island, Lagos" -> "Lagos")
-    const parts = tenant.propertyAddress.split(", ");
+    const parts = tenant.properties.address.split(", ");
     return parts[parts.length - 1];
-  }))];
+  }).filter(Boolean))];
 
   // Filter tenants based on search and filters
   const filteredTenants = tenants.filter(tenant => {
     const matchesSearch = tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tenant.unit.toLowerCase().includes(searchTerm.toLowerCase());
+                         (tenant.email && tenant.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (tenant.unit_number && tenant.unit_number.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesProperty = !selectedProperty || tenant.property === selectedProperty;
+    const matchesProperty = !selectedProperty || tenant.properties?.name === selectedProperty;
     
     const matchesLocation = !selectedLocation || 
-                           tenant.propertyAddress.toLowerCase().includes(selectedLocation.toLowerCase());
+                           (tenant.properties?.address && tenant.properties.address.toLowerCase().includes(selectedLocation.toLowerCase()));
     
     return matchesSearch && matchesProperty && matchesLocation;
   });
@@ -234,23 +238,38 @@ const Tenants = () => {
         </div>
 
         {/* Tenants Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredTenants.map((tenant) => (
-            <TenantCard 
-              key={tenant.id} 
-              tenant={tenant} 
-              onTenantUpdate={handleTenantUpdate}
-            />
-          ))}
-        </div>
-
-        {/* No Results */}
-        {filteredTenants.length === 0 && (
+        {loading ? (
           <div className="text-center py-12">
-            <div className="text-muted-foreground mb-4">No tenants found matching your criteria</div>
-            <Button variant="outline" onClick={clearFilters}>
-              Clear all filters
-            </Button>
+            <div className="text-muted-foreground">Loading tenants...</div>
+          </div>
+        ) : filteredTenants.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground mb-4">
+              {tenants.length === 0 ? "No tenants found. Add your first tenant to get started." : "No tenants found matching your criteria"}
+            </div>
+            {tenants.length === 0 ? (
+              <Button 
+                className="bg-gradient-to-r from-primary to-primary-light"
+                onClick={() => window.location.href = '/tenants/add'}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Tenant
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={clearFilters}>
+                Clear all filters
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredTenants.map((tenant) => (
+              <TenantCard 
+                key={tenant.id} 
+                tenant={tenant} 
+                onTenantUpdate={handleTenantUpdate}
+              />
+            ))}
           </div>
         )}
       </div>

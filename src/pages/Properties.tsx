@@ -3,51 +3,42 @@ import Layout from "@/components/Layout";
 import PropertyCard from "@/components/PropertyCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Properties = () => {
-  const [properties, setProperties] = useState([
-    {
-      id: "1",
-      name: "Ikoyi Heights",
-      address: "Victoria Island, Lagos",
-      type: "Apartment Complex",
-      units: 24,
-      occupiedUnits: 20,
-      monthlyRevenue: 4800000,
-      status: "active" as const
-    },
-    {
-      id: "2", 
-      name: "Lekki Gardens",
-      address: "Lekki Phase 1, Lagos",
-      type: "Residential Estate",
-      units: 36,
-      occupiedUnits: 32,
-      monthlyRevenue: 5600000,
-      status: "active" as const
-    },
-    {
-      id: "3",
-      name: "Abuja Business Center",
-      address: "Central Business District, Abuja",
-      type: "Commercial Complex",
-      units: 18,
-      occupiedUnits: 15,
-      monthlyRevenue: 7200000,
-      status: "maintenance" as const
-    },
-    {
-      id: "4",
-      name: "Surulere Plaza",
-      address: "Surulere, Lagos",
-      type: "Mixed Use",
-      units: 12,
-      occupiedUnits: 8,
-      monthlyRevenue: 2400000,
-      status: "active" as const
+  const { user } = useAuth();
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      fetchProperties();
     }
-  ]);
+  }, [user]);
+
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching properties:', error);
+        return;
+      }
+
+      setProperties(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePropertyUpdate = (updatedProperty: any) => {
     setProperties(prev => 
@@ -56,6 +47,11 @@ const Properties = () => {
       )
     );
   };
+
+  const filteredProperties = properties.filter(property =>
+    property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.address.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Layout>
@@ -82,6 +78,8 @@ const Properties = () => {
             <Input 
               placeholder="Search properties..." 
               className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <Button variant="outline">
@@ -91,15 +89,36 @@ const Properties = () => {
         </div>
 
         {/* Properties Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {properties.map((property) => (
-            <PropertyCard 
-              key={property.id} 
-              property={property} 
-              onPropertyUpdate={handlePropertyUpdate}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground">Loading properties...</div>
+          </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground mb-4">
+              {properties.length === 0 ? "No properties found. Add your first property to get started." : "No properties match your search."}
+            </div>
+            {properties.length === 0 && (
+              <Button 
+                className="bg-gradient-to-r from-primary to-primary-light"
+                onClick={() => window.location.href = '/properties/add'}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Property
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredProperties.map((property) => (
+              <PropertyCard 
+                key={property.id} 
+                property={property} 
+                onPropertyUpdate={handlePropertyUpdate}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );
