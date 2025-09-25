@@ -40,6 +40,43 @@ const Properties = () => {
     }
   };
 
+  // Set up real-time updates for properties
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('property-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'properties',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setProperties(prev => [payload.new, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setProperties(prev => 
+              prev.map(prop => 
+                prop.id === payload.new.id ? payload.new : prop
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setProperties(prev => 
+              prev.filter(prop => prop.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const handlePropertyUpdate = (updatedProperty: any) => {
     setProperties(prev => 
       prev.map(prop => 

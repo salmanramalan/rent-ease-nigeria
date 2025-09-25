@@ -71,6 +71,44 @@ const Tenants = () => {
     }
   };
 
+  // Set up real-time updates for tenants
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('tenant-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tenants',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            // Fetch the complete tenant data with property info
+            fetchTenants();
+          } else if (payload.eventType === 'UPDATE') {
+            setTenants(prev => 
+              prev.map(tenant => 
+                tenant.id === payload.new.id ? { ...tenant, ...payload.new } : tenant
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setTenants(prev => 
+              prev.filter(tenant => tenant.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const handleTenantUpdate = (updatedTenant: any) => {
     setTenants(prev => 
       prev.map(tenant => 
