@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
-import { Building2, AlertCircle, Loader2 } from 'lucide-react';
+import { Building2, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -78,6 +78,19 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-light/10 to-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Back to Landing Button */}
+        <div className="mb-4">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/')}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Landing
+          </Button>
+        </div>
+
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="p-3 rounded-lg bg-gradient-to-br from-primary to-primary-light">
