@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TenantCardProps {
   tenant: {
@@ -31,8 +33,12 @@ interface TenantCardProps {
 
 const TenantCard = ({ tenant, onTenantUpdate }: TenantCardProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [availableProperties, setAvailableProperties] = useState<any[]>([]);
+  const [availableUnits, setAvailableUnits] = useState<any[]>([]);
   const [editForm, setEditForm] = useState({
     name: tenant.name,
     email: tenant.email,
@@ -46,18 +52,38 @@ const TenantCard = ({ tenant, onTenantUpdate }: TenantCardProps) => {
     leaseExpiry: tenant.leaseExpiry
   });
 
-  // Mock data for properties and units
-  const availableProperties = [
-    { id: "1", name: "Ikoyi Heights", address: "Victoria Island, Lagos" },
-    { id: "2", name: "Lekki Gardens", address: "Lekki Phase 1, Lagos" },
-    { id: "3", name: "Abuja Business Center", address: "Central Business District, Abuja" },
-    { id: "4", name: "Surulere Plaza", address: "Surulere, Lagos" },
-  ];
+  // Fetch available properties and units when editing
+  useEffect(() => {
+    if (!user || !isEditDialogOpen) return;
+    
+    const fetchAvailableOptions = async () => {
+      const { data: propertiesData, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          units:units(id, unit_number, is_occupied)
+        `)
+        .eq('user_id', user.id);
 
-  const availableUnits = [
-    "Unit A1", "Unit A2", "Unit A3", "Unit B1", "Unit B2", "Unit B3", 
-    "Unit C1", "Unit C2", "Unit D1", "Unit D2"
-  ];
+      if (error) {
+        console.error('Error fetching properties:', error);
+        return;
+      }
+
+      setAvailableProperties(propertiesData || []);
+      
+      // Set available units for the currently selected property
+      const currentProperty = propertiesData?.find(p => p.name === editForm.property);
+      if (currentProperty) {
+        const unitsForProperty = currentProperty.units?.filter((unit: any) => 
+          !unit.is_occupied || unit.unit_number === tenant.unit
+        ) || [];
+        setAvailableUnits(unitsForProperty);
+      }
+    };
+
+    fetchAvailableOptions();
+  }, [user, isEditDialogOpen, editForm.property, tenant.unit]);
 
   const handleEmailContact = () => {
     const subject = `Regarding ${tenant.property} - ${tenant.unit}`;
@@ -75,23 +101,54 @@ const TenantCard = ({ tenant, onTenantUpdate }: TenantCardProps) => {
     setIsEditDialogOpen(true);
   };
 
-  const handleEditSubmit = () => {
-    const updatedTenant = {
-      ...tenant,
-      ...editForm
-    };
-    
-    onTenantUpdate?.(updatedTenant);
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "Tenant Updated",
-      description: `${editForm.name} has been updated successfully.`,
-    });
+  const handleEditSubmit = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('tenants')
+        .update({
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          lease_start: editForm.rentStartDate,
+          lease_end: editForm.leaseExpiry,
+          monthly_rent: editForm.annualRent / 12
+        })
+        .eq('id', tenant.id);
+
+      if (error) throw error;
+
+      const updatedTenant = {
+        ...tenant,
+        ...editForm
+      };
+      
+      onTenantUpdate?.(updatedTenant);
+      setIsEditDialogOpen(false);
+      
+      toast({
+        title: "Tenant Updated",
+        description: `${editForm.name} has been updated successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update tenant. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePropertyChange = (propertyName: string) => {
     const selectedProperty = availableProperties.find(p => p.name === propertyName);
+    if (selectedProperty) {
+      const unitsForProperty = selectedProperty.units?.filter((unit: any) => 
+        !unit.is_occupied || unit.unit_number === tenant.unit
+      ) || [];
+      setAvailableUnits(unitsForProperty);
+    }
     setEditForm({
       ...editForm,
       property: propertyName,
@@ -449,11 +506,11 @@ Generated: ${new Date().toLocaleDateString()}
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
-                            {availableProperties.map((prop) => (
-                              <SelectItem key={prop.id} value={prop.name}>{prop.name}</SelectItem>
-                            ))}
-                          </SelectContent>
+                           <SelectContent className="bg-background border-border z-50">
+                             {availableProperties.map((prop) => (
+                               <SelectItem key={prop.id} value={prop.name}>{prop.name}</SelectItem>
+                             ))}
+                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
@@ -462,11 +519,11 @@ Generated: ${new Date().toLocaleDateString()}
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
-                            {availableUnits.map((unit) => (
-                              <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                            ))}
-                          </SelectContent>
+                           <SelectContent className="bg-background border-border z-50">
+                             {availableUnits.map((unit) => (
+                               <SelectItem key={unit.id} value={unit.unit_number}>{unit.unit_number}</SelectItem>
+                             ))}
+                           </SelectContent>
                         </Select>
                       </div>
                     </div>
@@ -531,9 +588,9 @@ Generated: ${new Date().toLocaleDateString()}
                     
                     <div className="flex justify-end gap-2 pt-4">
                       <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                      <Button onClick={handleEditSubmit} className="bg-gradient-to-r from-primary to-primary-light">
-                        Save Changes
-                      </Button>
+                       <Button onClick={handleEditSubmit} disabled={loading} className="bg-gradient-to-r from-primary to-primary-light">
+                         {loading ? "Saving..." : "Save Changes"}
+                       </Button>
                     </div>
                   </div>
                 </DialogContent>

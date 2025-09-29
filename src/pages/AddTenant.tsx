@@ -8,51 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const AddTenant = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [availableUnits, setAvailableUnits] = useState<any[]>([]);
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
   
-  // Mock properties data with annual rent per unit
-  const properties = [
-    {
-      id: "1",
-      name: "Ikoyi Heights",
-      address: "Victoria Island, Lagos",
-      type: "Apartment Complex",
-      units: 24,
-      occupiedUnits: 20,
-      annualRentPerUnit: 2400000
-    },
-    {
-      id: "2", 
-      name: "Lekki Gardens",
-      address: "Lekki Phase 1, Lagos",
-      type: "Residential Estate",
-      units: 36,
-      occupiedUnits: 32,
-      annualRentPerUnit: 1800000
-    },
-    {
-      id: "3",
-      name: "Abuja Business Center",
-      address: "Central Business District, Abuja",
-      type: "Commercial Complex",
-      units: 18,
-      occupiedUnits: 15,
-      annualRentPerUnit: 4800000
-    },
-    {
-      id: "4",
-      name: "Surulere Plaza",
-      address: "Surulere, Lagos",
-      type: "Mixed Use",
-      units: 12,
-      occupiedUnits: 8,
-      annualRentPerUnit: 2000000
-    }
-  ];
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -64,36 +31,118 @@ const AddTenant = () => {
     leaseExpiry: ""
   });
 
-  const [selectedProperty, setSelectedProperty] = useState<any>(null);
-  const [availableUnits, setAvailableUnits] = useState<string[]>([]);
+  // Fetch properties with vacancies
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchPropertiesWithVacancies = async () => {
+      const { data: propertiesData, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          units:units(id, unit_number, is_occupied)
+        `)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching properties:', error);
+        return;
+      }
+
+      // Filter properties that have available units
+      const propertiesWithVacancies = propertiesData?.filter(property => 
+        property.units?.some((unit: any) => !unit.is_occupied)
+      ) || [];
+
+      setProperties(propertiesWithVacancies);
+    };
+
+    fetchPropertiesWithVacancies();
+
+    // Set up real-time updates for properties and units
+    const propertiesChannel = supabase
+      .channel('properties-channel')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'properties',
+        filter: `user_id=eq.${user.id}`
+      }, () => {
+        fetchPropertiesWithVacancies();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'units'
+      }, () => {
+        fetchPropertiesWithVacancies();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(propertiesChannel);
+    };
+  }, [user]);
 
   // Generate available units when property is selected
   useEffect(() => {
     if (selectedProperty) {
-      const availableUnitsCount = selectedProperty.units - selectedProperty.occupiedUnits;
-      const units = [];
-      for (let i = 1; i <= availableUnitsCount; i++) {
-        units.push(`Unit ${i + selectedProperty.occupiedUnits}`);
-      }
-      setAvailableUnits(units);
+      const availableUnitsForProperty = selectedProperty.units?.filter((unit: any) => !unit.is_occupied) || [];
+      setAvailableUnits(availableUnitsForProperty);
       
-      // Auto-fill annual rent
+      // Auto-fill annual rent based on monthly rent
+      const annualRent = selectedProperty.monthly_rent ? selectedProperty.monthly_rent * 12 : "";
       setFormData(prev => ({ 
         ...prev, 
-        annualRent: selectedProperty.annualRentPerUnit.toString(),
+        annualRent: annualRent.toString(),
         unit: "" // Reset unit selection
       }));
     }
   }, [selectedProperty]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate tenant creation
-    toast({
-      title: "Tenant Added Successfully",
-      description: `${formData.name} has been added to ${formData.unit} at ${selectedProperty?.name}.`,
-    });
-    navigate("/tenants");
+    if (!user || !selectedProperty) return;
+
+    setLoading(true);
+    try {
+      const selectedUnit = availableUnits.find(unit => unit.id === formData.unit);
+      if (!selectedUnit) {
+        throw new Error('Please select a valid unit');
+      }
+
+      const { error } = await supabase
+        .from('tenants')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          property_id: selectedProperty.id,
+          unit_id: selectedUnit.id,
+          unit_number: selectedUnit.unit_number,
+          lease_start: formData.rentStartDate,
+          lease_end: formData.leaseExpiry,
+          monthly_rent: parseFloat(formData.annualRent) / 12,
+          security_deposit: 0,
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Tenant Added Successfully",
+        description: `${formData.name} has been added to ${selectedUnit.unit_number} at ${selectedProperty.name}.`,
+      });
+      navigate("/tenants");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add tenant. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -141,12 +190,15 @@ const AddTenant = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a property" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {properties.map((property) => (
-                      <SelectItem key={property.id} value={property.id}>
-                        {property.name} - {property.address} ({property.units - property.occupiedUnits} units available)
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="bg-background border-border z-50">
+                    {properties.map((property) => {
+                      const vacantUnits = property.units?.filter((unit: any) => !unit.is_occupied).length || 0;
+                      return (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name} - {property.address} ({vacantUnits} units available)
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -175,13 +227,13 @@ const AddTenant = () => {
                     <SelectTrigger>
                       <SelectValue placeholder={selectedProperty ? "Select available unit" : "Select property first"} />
                     </SelectTrigger>
-                    <SelectContent>
-                      {availableUnits.map((unit) => (
-                        <SelectItem key={unit} value={unit}>
-                          {unit}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                     <SelectContent className="bg-background border-border z-50">
+                       {availableUnits.map((unit) => (
+                         <SelectItem key={unit.id} value={unit.id}>
+                           {unit.unit_number}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
                   </Select>
                 </div>
               </div>
@@ -261,8 +313,8 @@ const AddTenant = () => {
 
 
               <div className="flex gap-3 pt-4">
-                <Button type="submit" className="bg-gradient-to-r from-primary to-primary-light">
-                  Add Tenant
+                <Button type="submit" disabled={loading} className="bg-gradient-to-r from-primary to-primary-light">
+                  {loading ? "Adding..." : "Add Tenant"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => navigate("/tenants")}>
                   Cancel

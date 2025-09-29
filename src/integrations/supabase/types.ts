@@ -126,6 +126,7 @@ export type Database = {
           property_id: string
           security_deposit: number | null
           status: string | null
+          unit_id: string | null
           unit_number: string | null
           updated_at: string
           user_id: string
@@ -142,6 +143,7 @@ export type Database = {
           property_id: string
           security_deposit?: number | null
           status?: string | null
+          unit_id?: string | null
           unit_number?: string | null
           updated_at?: string
           user_id: string
@@ -158,6 +160,7 @@ export type Database = {
           property_id?: string
           security_deposit?: number | null
           status?: string | null
+          unit_id?: string | null
           unit_number?: string | null
           updated_at?: string
           user_id?: string
@@ -165,6 +168,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tenants_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          created_at: string
+          id: string
+          is_occupied: boolean
+          property_id: string
+          unit_number: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_occupied?: boolean
+          property_id: string
+          unit_number: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_occupied?: boolean
+          property_id?: string
+          unit_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
