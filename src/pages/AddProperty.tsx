@@ -9,10 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const AddProperty = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -22,14 +26,40 @@ const AddProperty = () => {
     description: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate property creation
-    toast({
-      title: "Property Added Successfully",
-      description: `${formData.name} has been added to your portfolio.`,
-    });
-    navigate("/properties");
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .insert({
+          name: formData.name,
+          address: formData.address,
+          type: formData.type,
+          units: parseInt(formData.units) || 1,
+          monthly_rent: formData.annualRentPerUnit ? parseFloat(formData.annualRentPerUnit) / 12 : null,
+          description: formData.description || null,
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Property Added Successfully",
+        description: `${formData.name} has been added to your portfolio.`,
+      });
+      navigate("/properties");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add property. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -143,8 +173,8 @@ const AddProperty = () => {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button type="submit" className="bg-gradient-to-r from-primary to-primary-light">
-                  Create Property
+                <Button type="submit" disabled={loading} className="bg-gradient-to-r from-primary to-primary-light">
+                  {loading ? "Creating..." : "Create Property"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => navigate("/properties")}>
                   Cancel

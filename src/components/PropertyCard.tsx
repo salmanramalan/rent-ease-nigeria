@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PropertyCardProps {
   property: {
@@ -16,41 +17,68 @@ interface PropertyCardProps {
     address: string;
     type: string;
     units: number;
-    occupiedUnits: number;
-    monthlyRevenue: number;
-    status: "active" | "maintenance" | "vacant";
+    occupiedUnits?: number;
+    monthlyRevenue?: number;
+    monthly_rent?: number;
+    status?: "active" | "maintenance" | "vacant";
   };
-  onPropertyUpdate?: (property: PropertyCardProps['property']) => void;
+  onPropertyUpdate?: (property: any) => void;
 }
 
 const PropertyCard = ({ property, onPropertyUpdate }: PropertyCardProps) => {
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isUnitsDialogOpen, setIsUnitsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     name: property.name,
     address: property.address,
     type: property.type,
     units: property.units,
-    status: property.status,
-    monthlyRevenue: property.monthlyRevenue
+    status: property.status || 'active',
+    monthlyRevenue: property.monthlyRevenue || property.monthly_rent || 0
   });
   
-  const occupancyRate = Math.round((property.occupiedUnits / property.units) * 100);
+  const occupancyRate = property.occupiedUnits ? Math.round((property.occupiedUnits / property.units) * 100) : 0;
   
-  const handleEditSubmit = () => {
-    const updatedProperty = {
-      ...property,
-      ...editForm
-    };
-    
-    onPropertyUpdate?.(updatedProperty);
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "Property Updated",
-      description: `${editForm.name} has been updated successfully.`,
-    });
+  const handleEditSubmit = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({
+          name: editForm.name,
+          address: editForm.address,
+          type: editForm.type,
+          units: editForm.units,
+          monthly_rent: editForm.monthlyRevenue
+        })
+        .eq('id', property.id);
+
+      if (error) throw error;
+
+      const updatedProperty = {
+        ...property,
+        ...editForm,
+        monthly_rent: editForm.monthlyRevenue
+      };
+      
+      onPropertyUpdate?.(updatedProperty);
+      setIsEditDialogOpen(false);
+      
+      toast({
+        title: "Property Updated",
+        description: `${editForm.name} has been updated successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update property. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUnitsManagement = () => {
@@ -105,7 +133,7 @@ const PropertyCard = ({ property, onPropertyUpdate }: PropertyCardProps) => {
               Occupancy
             </div>
             <div className="text-lg font-semibold text-foreground">
-              {property.occupiedUnits}/{property.units} ({occupancyRate}%)
+              {property.occupiedUnits || 0}/{property.units} ({occupancyRate}%)
             </div>
           </div>
           
@@ -115,7 +143,7 @@ const PropertyCard = ({ property, onPropertyUpdate }: PropertyCardProps) => {
               Monthly Revenue
             </div>
             <div className="text-lg font-semibold text-foreground">
-              ₦{property.monthlyRevenue.toLocaleString()}
+              ₦{(property.monthlyRevenue || property.monthly_rent || 0).toLocaleString()}
             </div>
           </div>
         </div>
@@ -202,8 +230,8 @@ const PropertyCard = ({ property, onPropertyUpdate }: PropertyCardProps) => {
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={handleEditSubmit} className="bg-gradient-to-r from-primary to-primary-light">
-                    Save Changes
+                  <Button onClick={handleEditSubmit} disabled={loading} className="bg-gradient-to-r from-primary to-primary-light">
+                    {loading ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </div>
@@ -232,7 +260,7 @@ const PropertyCard = ({ property, onPropertyUpdate }: PropertyCardProps) => {
                     <div className="text-sm text-success">Occupied</div>
                   </div>
                   <div className="p-4 bg-warning-light rounded-lg">
-                    <div className="text-2xl font-bold text-warning">{property.units - property.occupiedUnits}</div>
+                    <div className="text-2xl font-bold text-warning">{property.units - (property.occupiedUnits || 0)}</div>
                     <div className="text-sm text-warning">Vacant</div>
                   </div>
                 </div>
